@@ -1,10 +1,11 @@
-
 // Project: agk_wurfelcraft 
 // Created: 20-07-31
 
 // show all errors
 
 SetErrorMode(2)
+
+#include "voxel.agc"
 
 // set window properties
 SetWindowTitle( "agk_wurfelcraft" )
@@ -17,6 +18,8 @@ SetOrientationAllowed( 1, 1, 1, 1 ) // allow both portrait and landscape on mobi
 SetSyncRate( 30, 0 ) // 30fps instead of 60 to save battery
 SetScissor( 0,0,0,0 ) // use the maximum available screen space, no black borders
 UseNewDefaultFonts( 1 )
+
+MemblockID=Voxel_InitWorld()
 
 do
     Print( ScreenFPS() )
