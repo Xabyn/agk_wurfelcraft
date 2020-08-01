@@ -5,6 +5,7 @@
 
 SetErrorMode(2)
 
+#include ".\..\Templates\ShaderPack\Includes\ShaderPack.agc"
 #include "voxel.agc"
 
 // set window properties
@@ -19,9 +20,13 @@ SetSyncRate( 30, 0 ) // 30fps instead of 60 to save battery
 SetScissor( 0,0,0,0 ) // use the maximum available screen space, no black borders
 UseNewDefaultFonts( 1 )
 
+SetSkyBoxVisible(1)
+
 MemblockID=Voxel_InitWorld()
 
 do
     Print( ScreenFPS() )
+    
+    SP_ControlCamera()
     Sync()
 loop
