@@ -49,26 +49,70 @@
 
 // Initialise the Voxel Engine
 function Voxel_InitWorld()
-	ObjectID=Voxel_CreateFace()
-	DiffuseImageID=CreateImageColor(255,255,255,255)
-	SetObjectImage(ObjectID,DiffuseImageID,0)
-	SetObjectCullMode(ObjectID,0)
-	NormalImageID=CreateImageColor(128,128,255,255)
-	SetObjectNormalMap(ObjectID,NormalImageID)
-endfunction ObjectID
-
-function Voxel_CreateFace()
+	ChunckObjectID=CreateObjectPlane(1,1)
+	
+	CubeX=0 //does not work
+	CubeY=0
+	CubeZ=0
+	
 	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ)
+	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
+	
+	RotateObjectLocalY(ChunckObjectID,90)
+	FixObjectPivot(ChunckObjectID)
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ)
+	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
+	RotateObjectLocalY(ChunckObjectID,-90)
+	
+	RotateObjectLocalY(ChunckObjectID,180)
+	FixObjectPivot(ChunckObjectID)
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ)
+	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
+	RotateObjectLocalY(ChunckObjectID,-180)
+	
+	RotateObjectLocalY(ChunckObjectID,-90)
+	FixObjectPivot(ChunckObjectID)
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ)
+	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
+	RotateObjectLocalY(ChunckObjectID,90)
+	
+	SetObjectRotation(ChunckObjectID,-90,0,0)
+	FixObjectPivot(ChunckObjectID)
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ)
+	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
+	SetObjectRotation(ChunckObjectID,90,0,0)
+	FixObjectPivot(ChunckObjectID)
+	
+	SetObjectRotation(ChunckObjectID,90,0,0)
+	FixObjectPivot(ChunckObjectID)
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ)
+	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
+	SetObjectRotation(ChunckObjectID,-90,0,0)
+	FixObjectPivot(ChunckObjectID)
+	
+	DiffuseImageID=CreateImageColor(255,255,255,255)
+	SetObjectImage(ChunckObjectID,DiffuseImageID,0)
+	NormalImageID=CreateImageColor(128,128,255,255)
+	SetObjectNormalMap(ChunckObjectID,NormalImageID)
+endfunction ChunckObjectID
+
+function Voxel_AddFaceToMemblock(MemblockID,X,Y,Z)
 	VertexCount=GetMemblockInt(MemblockID,0)
 	VertexSize=GetMemblockInt(MemblockID,12)
 	VertexOffset=GetMemblockInt(MemblockID,16)
 	IndexOffset=GetMemblockInt(MemblockID,20)
-	HalfFaceSize=5
+	HalfFaceSize#=5
 	
-	SetMeshMemblockVertexPosition(MemblockID,0,-HalfFaceSize,HalfFaceSize,0)
-	SetMeshMemblockVertexPosition(MemblockID,1,HalfFaceSize,HalfFaceSize,0)
-	SetMeshMemblockVertexPosition(MemblockID,2,HalfFaceSize,-HalfFaceSize,0)
-	SetMeshMemblockVertexPosition(MemblockID,3,-HalfFaceSize,-HalfFaceSize,0)
+	SetMeshMemblockVertexPosition(MemblockID,0,X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+	SetMeshMemblockVertexPosition(MemblockID,1,X+HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+	SetMeshMemblockVertexPosition(MemblockID,2,X+HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
+	SetMeshMemblockVertexPosition(MemblockID,3,X-HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
 	
 	SetMeshMemblockVertexNormal(MemblockID,0,0,0,1)
 	SetMeshMemblockVertexNormal(MemblockID,1,0,0,1)
@@ -111,9 +155,7 @@ function Voxel_CreateFace()
 	SetMemblockInt(MemblockID,IndexOffset+3*4,2)
 	SetMemblockInt(MemblockID,IndexOffset+4*4,3)
 	SetMemblockInt(MemblockID,IndexOffset+5*4,0)
-
-	ObjectID=CreateObjectFromMeshMemblock(MemblockID)
-endfunction ObjectID
+endfunction MemblockID
 
 function Voxel_CreateMeshMemblock()
 	VertexCount=4
