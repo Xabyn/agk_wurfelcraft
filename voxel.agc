@@ -59,34 +59,8 @@
 function Voxel_InitWorld()
 	ChunckObjectID=CreateObjectPlane(1,1)
 	
-	CubeX=0 //does not work
-	CubeY=0
-	CubeZ=0
-	
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ,FaceFront)
-	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
-	
-
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ,FaceBack)
-	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
-
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ,FaceLeft)
-	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
-	
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ,FaceRight)
-	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
-	
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ,FaceUp)
-	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
-	
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,CubeX,CubeY,CubeZ,FaceDown)
-	AddObjectMeshFromMemblock(ChunckObjectID,MemblockID)
+	Voxel_AddCubeToObject(ChunckObjectID,0,0,0)
+	Voxel_AddCubeToObject(ChunckObjectID,10,10,10)
 	
 	DiffuseImageID=LoadImage("TestImage.png")
 	SetObjectImage(ChunckObjectID,DiffuseImageID,0)
@@ -94,6 +68,36 @@ function Voxel_InitWorld()
 //~	SetObjectNormalMap(ChunckObjectID,NormalImageID)
 endfunction ChunckObjectID
 
+// Add A Cube to an Object
+// here should be the neighbour check
+// to save some faces the future
+function Voxel_AddCubeToObject(Object,X,Y,Z)
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceFront)
+	AddObjectMeshFromMemblock(Object,MemblockID)
+
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceBack)
+	AddObjectMeshFromMemblock(Object,MemblockID)
+
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceLeft)
+	AddObjectMeshFromMemblock(Object,MemblockID)
+	
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceRight)
+	AddObjectMeshFromMemblock(Object,MemblockID)
+	
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceUp)
+	AddObjectMeshFromMemblock(Object,MemblockID)
+	
+	MemblockID=Voxel_CreateMeshMemblock()
+	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDown)
+	AddObjectMeshFromMemblock(Object,MemblockID)
+endfunction
+
+// Populate the memblock with Face Data
 function Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDir)
 	VertexCount=GetMemblockInt(MemblockID,0)
 	VertexSize=GetMemblockInt(MemblockID,12)
@@ -357,6 +361,8 @@ function Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDir)
 	SetMemblockInt(MemblockID,IndexOffset+5*4,0)
 endfunction MemblockID
 
+// Generate the mesh header for a simple one sided plane
+// Position,Normal,UV,Color,Tangent and Bitangent Data
 function Voxel_CreateMeshMemblock()
 	VertexCount=4
 	IndexCount=6
@@ -414,6 +420,7 @@ function Voxel_CreateMeshMemblock()
     next Offset
 endfunction MemblockID
 
+// just print the mesh header
 function Vocel_PrintMeshMemblock(MemblockID)
 	local VertexCount as integer
 	local IndexCount as integer
@@ -442,6 +449,7 @@ function Vocel_PrintMeshMemblock(MemblockID)
 	next
 endfunction
 
+// needed to set Tangent and Bitangent vectors
 function Voxel_SetMemblockVec3(MemblockID,Offset,x#,y#,z#)
 	SetMemblockFloat(MemblockID,Offset,x#)
 	SetMemblockFloat(MemblockID,Offset+4,y#)
