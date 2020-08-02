@@ -5,8 +5,8 @@
 
 SetErrorMode(2)
 
-#include ".\..\Templates\ShaderPack\Includes\ShaderPack.agc"
 #include "voxel.agc"
+#include "camera.agc"
 
 // set window properties
 SetWindowTitle( "agk_wurfelcraft" )
@@ -27,6 +27,7 @@ MemblockID=Voxel_InitWorld()
 do
     Print( ScreenFPS() )
     
-    SP_ControlCamera()
+    ControlCamera()
+    
     Sync()
 loop

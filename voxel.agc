@@ -58,14 +58,13 @@ function Voxel_InitWorld()
 endfunction ObjectID
 
 function Voxel_CreateFace()
-	MemblockID=SP_CreateMeshMemblock(4,6,%1011)
-//~	MemblockID=Voxel_CreateMeshMemblock()
-	SP_PrintMeshMemblock(MemblockID)
+	MemblockID=Voxel_CreateMeshMemblock()
 	VertexCount=GetMemblockInt(MemblockID,0)
 	VertexSize=GetMemblockInt(MemblockID,12)
 	VertexOffset=GetMemblockInt(MemblockID,16)
 	IndexOffset=GetMemblockInt(MemblockID,20)
 	HalfFaceSize=5
+	
 	SetMeshMemblockVertexPosition(MemblockID,0,-HalfFaceSize,HalfFaceSize,0)
 	SetMeshMemblockVertexPosition(MemblockID,1,HalfFaceSize,HalfFaceSize,0)
 	SetMeshMemblockVertexPosition(MemblockID,2,HalfFaceSize,-HalfFaceSize,0)
@@ -85,27 +84,26 @@ function Voxel_CreateFace()
 	SetMeshMemblockVertexColor(MemblockID,1,0,255,0,255)
 	SetMeshMemblockVertexColor(MemblockID,2,0,255,255,255)
 	SetMeshMemblockVertexColor(MemblockID,3,255,0,0,255)
+
+	TangentOffset=3*4+3*4+2*4+4*1
+	Offset=VertexOffset+(0*VertexSize)+TangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
+	Offset=VertexOffset+(1*VertexSize)+TangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
+	Offset=VertexOffset+(2*VertexSize)+TangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
+	Offset=VertexOffset+(3*VertexSize)+TangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
 	
-//~	Offset=VertexOffset+(0*VertexSize)+40
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-//~	Offset=VertexOffset+(1*VertexSize)+40
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-//~	Offset=VertexOffset+(2*VertexSize)+40
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-//~	Offset=VertexOffset+(3*VertexSize)+40
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-//~	
-//~	Offset=VertexOffset+(0*VertexSize)+52
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-//~	Offset=VertexOffset+(1*VertexSize)+52
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-//~	Offset=VertexOffset+(2*VertexSize)+52
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-//~	Offset=VertexOffset+(3*VertexSize)+52
-//~	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-	
-//~	message(str(Offset))
-//~	message(str(GetMemblockSize(MemblockID)))
+	BitangentOffset=3*4+3*4+2*4+4*1+3*4
+	Offset=VertexOffset+(0*VertexSize)+BitangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
+	Offset=VertexOffset+(1*VertexSize)+BitangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
+	Offset=VertexOffset+(2*VertexSize)+BitangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
+	Offset=VertexOffset+(3*VertexSize)+BitangentOffset
+	Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
 
 	SetMemblockInt(MemblockID,IndexOffset+0*4,0)
 	SetMemblockInt(MemblockID,IndexOffset+1*4,1)
@@ -121,9 +119,9 @@ function Voxel_CreateMeshMemblock()
 	VertexCount=4
 	IndexCount=6
 	Attributes=6
+	VertexSize=60
 	VertexOffset=100
-	VertexSize=64
-	IndexOffset=356
+	IndexOffset=340
 
 	MemblockID=Creatememblock(VertexOffset+(VertexCount*VertexSize)+(IndexCount*4))
 	SetMemblockInt(MemblockID,0,VertexCount)
@@ -169,13 +167,12 @@ function Voxel_CreateMeshMemblock()
 	SetMemblockByte(MemblockID,84+3,12)
 	SetMemblockString(MemblockID,84+4,"bitangent"+chr(0))
 
-
     for Offset=VertexOffset to VertexOffset+(VertexCount*VertexSize) step 4
         SetMemblockFloat(MemblockID,Offset, 0.0)
     next Offset
 endfunction MemblockID
 
-function PrintMeshMemblock(MemblockID)
+function Vocel_PrintMeshMemblock(MemblockID)
 	local VertexCount as integer
 	local IndexCount as integer
 	local Attributes as integer
