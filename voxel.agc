@@ -52,18 +52,28 @@
 #constant FaceUp		5
 #constant FaceDown	6
 
+type WorldData
+	CubeType
+endtype
+
+global AtlasImageID
 
 // Functions
 
 // Initialise the Voxel Engine
-function Voxel_InitWorld()
+function Voxel_InitWorld(World ref as WorldData[][][])
+	AtlasImageID=LoadImage("terrain.png")
+	
 	ChunckObjectID=CreateObjectPlane(1,1)
 	
-	Voxel_AddCubeToObject(ChunckObjectID,0,0,0)
-	Voxel_AddCubeToObject(ChunckObjectID,10,10,10)
-	
-	DiffuseImageID=LoadImage("TestImage.png")
-	SetObjectImage(ChunckObjectID,DiffuseImageID,0)
+	for X=1 to World.length-1
+		for Y=1 to World[0].length-1
+			for Z=1 to World[0,0].length-1
+				if World[X,Y,Z].CubeType=1 then Voxel_AddCubeToObject(World,ChunckObjectID,X,Y,Z)
+			next Z
+		next Y
+	next X
+
 //~	NormalImageID=CreateImageColor(128,128,255,255)
 //~	SetObjectNormalMap(ChunckObjectID,NormalImageID)
 endfunction ChunckObjectID
@@ -71,30 +81,63 @@ endfunction ChunckObjectID
 // Add A Cube to an Object
 // here should be the neighbour check
 // to save some faces the future
-function Voxel_AddCubeToObject(Object,X,Y,Z)
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceFront)
-	AddObjectMeshFromMemblock(Object,MemblockID)
-
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceBack)
-	AddObjectMeshFromMemblock(Object,MemblockID)
-
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceLeft)
-	AddObjectMeshFromMemblock(Object,MemblockID)
+function Voxel_AddCubeToObject(World ref as WorldData[][][],ObjectID,X,Y,Z)
 	
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceRight)
-	AddObjectMeshFromMemblock(Object,MemblockID)
 	
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceUp)
-	AddObjectMeshFromMemblock(Object,MemblockID)
-	
-	MemblockID=Voxel_CreateMeshMemblock()
-	Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDown)
-	AddObjectMeshFromMemblock(Object,MemblockID)
+	if World[X,Y,Z+1].CubeType=0
+		MemblockID=Voxel_CreateMeshMemblock()
+		Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceFront)
+		AddObjectMeshFromMemblock(ObjectID,MemblockID)
+		DeleteMemblock(MemblockID)
+		MeshID=GetObjectNumMeshes(ObjectID)
+		ImageID=LoadsubImage(AtlasImageID,"img2")
+		SetObjectMeshImage(ObjectID,MeshID,ImageID,0)
+	endif
+	if World[X,Y,Z-1].CubeType=0
+		MemblockID=Voxel_CreateMeshMemblock()
+		Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceBack)
+		AddObjectMeshFromMemblock(ObjectID,MemblockID)
+		DeleteMemblock(MemblockID)
+		MeshID=GetObjectNumMeshes(ObjectID)
+		ImageID=LoadsubImage(AtlasImageID,"img2")
+		SetObjectMeshImage(ObjectID,MeshID,ImageID,0)
+	endif
+	if World[X-1,Y,Z].CubeType=0
+		MemblockID=Voxel_CreateMeshMemblock()
+		Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceLeft)
+		AddObjectMeshFromMemblock(ObjectID,MemblockID)
+		DeleteMemblock(MemblockID)
+		MeshID=GetObjectNumMeshes(ObjectID)
+		ImageID=LoadsubImage(AtlasImageID,"img2")
+		SetObjectMeshImage(ObjectID,MeshID,ImageID,0)
+	endif
+	if World[X+1,Y,Z].CubeType=0
+		MemblockID=Voxel_CreateMeshMemblock()
+		Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceRight)
+		AddObjectMeshFromMemblock(ObjectID,MemblockID)
+		DeleteMemblock(MemblockID)
+		MeshID=GetObjectNumMeshes(ObjectID)
+		ImageID=LoadsubImage(AtlasImageID,"img2")
+		SetObjectMeshImage(ObjectID,MeshID,ImageID,0)
+	endif
+	if World[X,Y+1,Z].CubeType=0
+		MemblockID=Voxel_CreateMeshMemblock()
+		Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceUp)
+		AddObjectMeshFromMemblock(ObjectID,MemblockID)
+		DeleteMemblock(MemblockID)
+		MeshID=GetObjectNumMeshes(ObjectID)
+		ImageID=LoadsubImage(AtlasImageID,"img0")
+		SetObjectMeshImage(ObjectID,MeshID,ImageID,0)
+	endif
+	if World[X,Y-1,Z].CubeType=0
+		MemblockID=Voxel_CreateMeshMemblock()
+		Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDown)
+		AddObjectMeshFromMemblock(ObjectID,MemblockID)
+		DeleteMemblock(MemblockID)
+		MeshID=GetObjectNumMeshes(ObjectID)
+		ImageID=LoadsubImage(AtlasImageID,"img2")
+		SetObjectMeshImage(ObjectID,MeshID,ImageID,0)
+	endif
 endfunction
 
 // Populate the memblock with Face Data
@@ -103,7 +146,7 @@ function Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDir)
 	VertexSize=GetMemblockInt(MemblockID,12)
 	VertexOffset=GetMemblockInt(MemblockID,16)
 	IndexOffset=GetMemblockInt(MemblockID,20)
-	HalfFaceSize#=5
+	HalfFaceSize#=0.5
 	Select FaceDir
 		case	FaceFront
 			SetMeshMemblockVertexPosition(MemblockID,0,X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
@@ -331,7 +374,7 @@ function Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDir)
 			SetMeshMemblockVertexColor(MemblockID,2,255,255,255,255)
 			SetMeshMemblockVertexColor(MemblockID,3,255,255,255,255)
 		
-			TangentOffset=3*4+3*4+2*4+4*1
+			TangentOffset=3*4+3*4+2*4+4*1 // Position+Normal+UV+Color Offsets
 			Offset=VertexOffset+(0*VertexSize)+TangentOffset
 			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
 			Offset=VertexOffset+(1*VertexSize)+TangentOffset
@@ -341,7 +384,7 @@ function Voxel_AddFaceToMemblock(MemblockID,X,Y,Z,FaceDir)
 			Offset=VertexOffset+(3*VertexSize)+TangentOffset
 			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
 			
-			BitangentOffset=3*4+3*4+2*4+4*1+3*4
+			BitangentOffset=3*4+3*4+2*4+4*1+3*4// Position+Normal+UV+Color+Tanget Offsets
 			Offset=VertexOffset+(0*VertexSize)+BitangentOffset
 			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
 			Offset=VertexOffset+(1*VertexSize)+BitangentOffset

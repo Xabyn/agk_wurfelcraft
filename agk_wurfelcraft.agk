@@ -51,11 +51,13 @@ output_path=
 FILE_0=main.agc;-1
 FILE_1=voxel.agc;-1
 FILE_2=camera.agc;-1
+FILE_3=noise.agc;-1
 
 [files]
-FILE_NAME_0=1;main.agc;30;0
-FILE_NAME_1=0;voxel.agc;59;1
-FILE_NAME_2=0;camera.agc;0;2
+FILE_NAME_0=0;main.agc;24;0
+FILE_NAME_1=0;voxel.agc;58;1
+FILE_NAME_2=0;camera.agc;20;2
+FILE_NAME_3=0;noise.agc;0;3
 
 [watchvariables]
 
