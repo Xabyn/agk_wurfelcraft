@@ -457,5 +457,5 @@ function Noise_Perlin3(xin#, yin#, zin#)
 	w# = Noise_Fade(zin#)
 	
 	// Interpolate
-	retValue# = lerp(lerp(lerp(n000#, n100#, u#),lerp(n001#, n101#, u#), w#),lerp(lerp(n010#, n110#, u#),lerp(n011#, n111#, u#), w#),v#)
+	retValue# = Noise_lerp(Noise_lerp(Noise_lerp(n000#, n100#, u#),Noise_lerp(n001#, n101#, u#), w#),Noise_lerp(Noise_lerp(n010#, n110#, u#),Noise_lerp(n011#, n111#, u#), w#),v#)
 endfunction retValue#
