@@ -1,48 +1,48 @@
 // Data Types able to represent any AGK mesh
-//~type Vec4Data
-//~	X#
-//~	Y#
-//~	Z#
-//~	W#
-//~endtype
+type Vec4Data
+	X#
+	Y#
+	Z#
+	W#
+endtype
 
-//~type Vec3Data
-//~	X#
-//~	Y#
-//~	Z#
-//~endtype
+type Vec3Data
+	X#
+	Y#
+	Z#
+endtype
 
-//~type Vec2Data
-//~	X#
-//~	Y#
-//~endtype
+type Vec2Data
+	X#
+	Y#
+endtype
 
-//~type RGBAData
-//~	Red#
-//~	Green#
-//~	Blue#
-//~	Alpha#
-//~endtype
+type RGBAData
+	Red#
+	Green#
+	Blue#
+	Alpha#
+endtype
 
-//~type BoneData
-//~	Weights as Vec4Data
-//~	Idices as Vec4Data
-//~endtype
+type BoneData
+	Weights as Vec4Data
+	Idices as Vec4Data
+endtype
 
-//~type VertexData
-//~	Pos as Vec3Data
-//~	UV as Vec2Data
-//~	Color as RGBAData
-//~	Normal as Vec3Data
-//~	Bone as BoneData
-//~	Tangent as Vec3Data
-//~	Bitangent as Vec3Data
-//~endtype
+type VertexData
+	Pos as Vec3Data
+	UV as Vec2Data
+	Color as RGBAData
+	Normal as Vec3Data
+	Bone as BoneData
+	Tangent as Vec3Data
+	Bitangent as Vec3Data
+endtype
 
-//~type ObjectData
-//~	Vertex as VertexData[]
-//~	Index as integer[]
-//~endtype
+type ObjectData
+	Vertex as VertexData[]
+	Index as integer[]
+endtype
 
 #constant FaceFront	1
 #constant FaceBack	2
@@ -60,340 +60,304 @@ global AtlasImageID
 // Functions
 
 // Initialise the Voxel Engine
-function Voxel_InitWorld(World ref as WorldData[][][])
-	AtlasImageID=LoadImage("terrain.png")
-	
-	VertexCount=4*5*2+4*4
-	IndexCount=(VertexCount/4)*6
-//~	ChunckObjectID=CreateObjectPlane(1,1)
-//~	MeshID=GetObjectNumMeshes(ChunckObjectID)
-	MemblockID=Voxel_CreateMeshMemblock(VertexCount)
-//~	MemblockID=SP_CreateMeshMemblock(VertexCount,IndexCount,%11011)
-	
-	VertexID=0
+function Voxel_InitWorld(Object ref as ObjectData,World ref as WorldData[][][])
 	for X=1 to World.length-1
 		for Y=1 to World[0].length-1
 			for Z=1 to World[0,0].length-1
-				VertexID=Voxel_AddCubeToObject(MemblockID,VertexID,World,X,Y,Z)
+				Voxel_AddCubeToObject(Object,World,X,Y,Z)
 			next Z
 		next Y
 	next X
-//~	Voxel_PrintMeshMemblock(MemblockID)
+	
+	MemblockID=Voxel_CreateMeshMemblock(Object.Vertex.length)
+	Voxel_WriteMeshMemblock(MemblockID,Object)
 	ChunckObjectID=CreateObjectFromMeshMemblock(MemblockID)
-//~	SetObjectMeshFromMemblock(ChunckObjectID,MeshID,MemblockID)
 	DeleteMemblock(MemblockID)
 	
-	SetObjectCullMode(ChunckObjectID,0)
-	
+	SetDefaultWrapU(1)
+	SetDefaultWrapV(1)
+	AtlasImageID=LoadImage("terrain.png")
 	DiffuseImageID=LoadImage("TestImage.png")
-	SetObjectImage(ChunckObjectID,DiffuseImageID,0)
+	SetObjectImage(ChunckObjectID,AtlasImageID,0)
 
 //~	NormalImageID=CreateImageColor(128,128,255,255)
 //~	SetObjectNormalMap(ChunckObjectID,NormalImageID)
 endfunction ChunckObjectID
 
 // Add A Cube to an Object
-function Voxel_AddCubeToObject(MemblockID,VertexID,World ref as WorldData[][][],X,Y,Z)
+function Voxel_AddCubeToObject(Object ref as ObjectData,World ref as WorldData[][][],X,Y,Z)
 	if World[X,Y,Z].CubeType=1
 		if World[X,Y,Z+1].CubeType=0
-			Voxel_AddFaceToMemblock(MemblockID,VertexID,X,Y,Z,FaceFront)
-			inc VertexID,4
+			Voxel_AddFaceToObject(Object,X,Y,Z,FaceFront)
 		endif
 		if World[X,Y,Z-1].CubeType=0
-			Voxel_AddFaceToMemblock(MemblockID,VertexID,X,Y,Z,FaceBack)
-			inc VertexID,4
+			Voxel_AddFaceToObject(Object,X,Y,Z,FaceBack)
 		endif
 		if World[X,Y+1,Z].CubeType=0
-			Voxel_AddFaceToMemblock(MemblockID,VertexID,X,Y,Z,FaceUp)
-			inc VertexID,4
+			Voxel_AddFaceToObject(Object,X,Y,Z,FaceUp)
 		endif
 		if World[X,Y-1,Z].CubeType=0
-			Voxel_AddFaceToMemblock(MemblockID,VertexID,X,Y,Z,FaceDown)
-			inc VertexID,4
+			Voxel_AddFaceToObject(Object,X,Y,Z,FaceDown)
 		endif
 		if World[X+1,Y,Z].CubeType=0
-			Voxel_AddFaceToMemblock(MemblockID,VertexID,X,Y,Z,FaceRight)
-			inc VertexID,4
+			Voxel_AddFaceToObject(Object,X,Y,Z,FaceRight)
 		endif
 		if World[X-1,Y,Z].CubeType=0
-			Voxel_AddFaceToMemblock(MemblockID,VertexID,X,Y,Z,FaceLeft)
-			inc VertexID,4
+			Voxel_AddFaceToObject(Object,X,Y,Z,FaceLeft)
 		endif
 	endif
-endfunction VertexID
+endfunction
 
 // Populate the memblock with Data
-function Voxel_AddFaceToMemblock(MemblockID,VertexID,X,Y,Z,FaceDir)
-	VertexCount=GetMemblockInt(MemblockID,0)
-	IndexCount=GetMemblockInt(MemblockID,4)
-//~	Attributes=GetMemblockInt(MemblockID,8)
-	VertexSize=GetMemblockInt(MemblockID,12)
-	VertexOffset=GetMemblockInt(MemblockID,16)
-	IndexOffset=GetMemblockInt(MemblockID,20)
-	HalfFaceSize#=0.5
+function Voxel_AddFaceToObject(Object ref as ObjectData,X,Y,Z,FaceDir)
+	TempVertex as VertexData[3]
+	HalfFaceSize#=0.5	
+	TileCount=16
+	TextureSize=256
+	TileSize#=TextureSize/TileCount
+	TexelHalfSize#=(1/TileSize#/16)*0.5
 	Select FaceDir
 		case FaceFront
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+0,X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+1,X+HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+2,X+HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+3,X-HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[0],X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[1],X+HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[2],X+HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[3],X-HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
 			
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+0,0,0,1)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+1,0,0,1)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+2,0,0,1)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+3,0,0,1)
+			Voxel_SetObjectFaceNormal(TempVertex[0],0,0,1)
+			Voxel_SetObjectFaceNormal(TempVertex[1],0,0,1)
+			Voxel_SetObjectFaceNormal(TempVertex[2],0,0,1)
+			Voxel_SetObjectFaceNormal(TempVertex[2],0,0,1)
 			
-			SetMeshMemblockVertexUV(MemblockID,VertexID+0,1,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+1,0,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+2,0,1)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+3,1,1)
+			Voxel_SetObjectFaceUV(TempVertex[0],1/TileSize#-TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[1],0+TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[2],0+TexelHalfSize#,1/TileSize#-TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[3],1/TileSize#-TexelHalfSize#,1/TileSize#-TexelHalfSize#)
 			
-			SetMeshMemblockVertexColor(MemblockID,VertexID+0,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+1,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+2,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+3,255,255,255,255)
-		
-			TangentOffset=3*4+3*4+2*4+4*1
-			Offset=VertexOffset+(VertexID+0*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,-1,0,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,-1,0,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,-1,0,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,-1,0,0)
+			Voxel_SetObjectFaceColor(TempVertex[0],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[1],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[2],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[3],255,255,255,255)
 			
-			BitangentOffset=3*4+3*4+2*4+4*1+3*4
-			Offset=VertexOffset+(VertexID+0*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
+			Voxel_SetObjectFaceTangent(TempVertex[0],-1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[1],-1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[2],-1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[3],-1,0,0)
+			
+			Voxel_SetObjectFaceBitangent(TempVertex[0],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[1],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[2],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[3],0,1,0)
 		endcase
 		case FaceBack
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+0,X+HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+1,X-HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+2,X-HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+3,X+HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[0],X+HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[1],X-HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[2],X-HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[3],X+HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
 			
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+0,0,0,-1)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+1,0,0,-1)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+2,0,0,-1)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+3,0,0,-1)
+			Voxel_SetObjectFaceNormal(TempVertex[0],0,0,-1)
+			Voxel_SetObjectFaceNormal(TempVertex[1],0,0,-1)
+			Voxel_SetObjectFaceNormal(TempVertex[2],0,0,-1)
+			Voxel_SetObjectFaceNormal(TempVertex[3],0,0,-1)
 			
-			SetMeshMemblockVertexUV(MemblockID,VertexID+0,1,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+1,0,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+2,0,1)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+3,1,1)
+			Voxel_SetObjectFaceUV(TempVertex[0],1/TileSize#-TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[1],0+TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[2],0+TexelHalfSize#,1/TileSize#-TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[3],1/TileSize#-TexelHalfSize#,1/TileSize#-TexelHalfSize#)
 			
-			SetMeshMemblockVertexColor(MemblockID,VertexID+0,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+1,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+2,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+3,255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[0],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[1],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[2],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[3],255,255,255,255)
 		
-			TangentOffset=3*4+3*4+2*4+4*1
-			Offset=VertexOffset+(VertexID+0*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[0],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[1],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[2],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[3],1,0,0)
 			
-			BitangentOffset=3*4+3*4+2*4+4*1+3*4
-			Offset=VertexOffset+(VertexID+0*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[0],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[1],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[2],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[3],0,1,0)
 		endcase
 		case FaceLeft
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+0,X-HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+1,X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+2,X-HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+3,X-HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[0],X-HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[1],X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[2],X-HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[3],X-HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
 			
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+0,-1,0,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+1,-1,0,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+2,-1,0,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+3,-1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[0],-1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[1],-1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[2],-1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[3],-1,0,0)
 			
-			SetMeshMemblockVertexUV(MemblockID,VertexID+0,1,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+1,0,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+2,0,1)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+3,1,1)
+			Voxel_SetObjectFaceUV(TempVertex[0],1/TileSize#-TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[1],0+TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[2],0+TexelHalfSize#,1/TileSize#-TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[3],1/TileSize#-TexelHalfSize#,1/TileSize#-TexelHalfSize#)
 			
-			SetMeshMemblockVertexColor(MemblockID,VertexID+0,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+1,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+2,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+3,255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[0],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[1],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[2],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[3],255,255,255,255)
 		
-			TangentOffset=3*4+3*4+2*4+4*1
-			Offset=VertexOffset+(VertexID+0*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
+			Voxel_SetObjectFaceTangent(TempVertex[0],0,0,-1)
+			Voxel_SetObjectFaceTangent(TempVertex[1],0,0,-1)
+			Voxel_SetObjectFaceTangent(TempVertex[2],0,0,-1)
+			Voxel_SetObjectFaceTangent(TempVertex[3],0,0,-1)
 			
-			BitangentOffset=3*4+3*4+2*4+4*1+3*4
-			Offset=VertexOffset+(VertexID+0*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[0],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[1],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[2],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[3],0,1,0)
 		endcase
 		case FaceRight
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+0,X+HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+1,X+HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+2,X+HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+3,X+HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[0],X+HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[1],X+HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[2],X+HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[3],X+HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
 			
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+0,1,0,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+1,1,0,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+2,1,0,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+3,1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[0],1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[1],1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[2],1,0,0)
+			Voxel_SetObjectFaceNormal(TempVertex[3],1,0,0)
 			
-			SetMeshMemblockVertexUV(MemblockID,VertexID+0,1,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+1,0,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+2,0,1)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+3,1,1)
+			Voxel_SetObjectFaceUV(TempVertex[0],1/TileSize#-TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[1],0+TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[2],0+TexelHalfSize#,1/TileSize#-TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[3],1/TileSize#-TexelHalfSize#,1/TileSize#-TexelHalfSize#)
 			
-			SetMeshMemblockVertexColor(MemblockID,VertexID+0,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+1,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+2,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+3,255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[0],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[1],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[2],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[3],255,255,255,255)
 		
-			TangentOffset=3*4+3*4+2*4+4*1
-			Offset=VertexOffset+(VertexID+0*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
+			Voxel_SetObjectFaceTangent(TempVertex[0],0,0,1)
+			Voxel_SetObjectFaceTangent(TempVertex[1],0,0,1)
+			Voxel_SetObjectFaceTangent(TempVertex[2],0,0,1)
+			Voxel_SetObjectFaceTangent(TempVertex[3],0,0,1)
 			
-			BitangentOffset=3*4+3*4+2*4+4*1+3*4
-			Offset=VertexOffset+(VertexID+0*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[0],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[1],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[2],0,1,0)
+			Voxel_SetObjectFaceBitangent(TempVertex[3],0,1,0)
 		endcase
 		case FaceUp
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+0,X+HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+1,X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+2,X-HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+3,X+HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[0],X+HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[1],X-HalfFaceSize#,Y+HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[2],X-HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[3],X+HalfFaceSize#,Y+HalfFaceSize#,Z-HalfFaceSize#)
 			
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+0,0,1,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+1,0,1,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+2,0,1,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+3,0,1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[0],0,1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[1],0,1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[2],0,1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[3],0,1,0)
 			
-			SetMeshMemblockVertexUV(MemblockID,VertexID+0,1,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+1,0,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+2,0,1)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+3,1,1)
+			Voxel_SetObjectFaceUV(TempVertex[0],1/TileSize#-TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[1],0+TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[2],0+TexelHalfSize#,1/TileSize#-TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[3],1/TileSize#-TexelHalfSize#,1/TileSize#-TexelHalfSize#)
 			
-			SetMeshMemblockVertexColor(MemblockID,VertexID+0,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+1,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+2,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+3,255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[0],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[1],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[2],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[3],255,255,255,255)
 		
-			TangentOffset=3*4+3*4+2*4+4*1
-			Offset=VertexOffset+(VertexID+0*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[0],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[1],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[2],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[3],1,0,0)
 			
-			BitangentOffset=3*4+3*4+2*4+4*1+3*4
-			Offset=VertexOffset+(VertexID+0*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,1)
+			Voxel_SetObjectFaceBitangent(TempVertex[0],0,0,1)
+			Voxel_SetObjectFaceBitangent(TempVertex[1],0,0,1)
+			Voxel_SetObjectFaceBitangent(TempVertex[2],0,0,1)
+			Voxel_SetObjectFaceBitangent(TempVertex[3],0,0,1)
 		endcase
 		case FaceDown
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+0,X-HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+1,X+HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+2,X+HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
-			SetMeshMemblockVertexPosition(MemblockID,VertexID+3,X-HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[0],X-HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[1],X+HalfFaceSize#,Y-HalfFaceSize#,Z+HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[2],X+HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
+			Voxel_SetObjectFacePosition(TempVertex[3],X-HalfFaceSize#,Y-HalfFaceSize#,Z-HalfFaceSize#)
 			
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+0,0,-1,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+1,0,-1,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+2,0,-1,0)
-			SetMeshMemblockVertexNormal(MemblockID,VertexID+3,0,-1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[0],0,-1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[1],0,-1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[2],0,-1,0)
+			Voxel_SetObjectFaceNormal(TempVertex[3],0,-1,0)
 			
-			SetMeshMemblockVertexUV(MemblockID,VertexID+0,0,1)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+1,1,1)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+2,1,0)
-			SetMeshMemblockVertexUV(MemblockID,VertexID+3,0,0)
+			Voxel_SetObjectFaceUV(TempVertex[0],0+TexelHalfSize#,1/TileSize#-TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[1],1/TileSize#-TexelHalfSize#,1/TileSize#-TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[2],1/TileSize#-TexelHalfSize#,0+TexelHalfSize#)
+			Voxel_SetObjectFaceUV(TempVertex[3],0+TexelHalfSize#,0+TexelHalfSize#)
 			
-			SetMeshMemblockVertexColor(MemblockID,VertexID+0,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+1,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+2,255,255,255,255)
-			SetMeshMemblockVertexColor(MemblockID,VertexID+3,255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[0],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[1],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[2],255,255,255,255)
+			Voxel_SetObjectFaceColor(TempVertex[3],255,255,255,255)
 		
-			TangentOffset=3*4+3*4+2*4+4*1 // Position+Normal+UV+Color Offsets
-			Offset=VertexOffset+(VertexID+0*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+TangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[0],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[1],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[2],1,0,0)
+			Voxel_SetObjectFaceTangent(TempVertex[3],1,0,0)
 			
-			BitangentOffset=3*4+3*4+2*4+4*1+3*4 // Position+Normal+UV+Color+Tanget Offsets
-			Offset=VertexOffset+(VertexID+0*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
-			Offset=VertexOffset+(VertexID+1*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
-			Offset=VertexOffset+(VertexID+2*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
-			Offset=VertexOffset+(VertexID+3*VertexSize)+BitangentOffset
-			Voxel_SetMemblockVec3(MemblockID,Offset,0,0,-1)
+			Voxel_SetObjectFaceBitangent(TempVertex[0],0,0,1)
+			Voxel_SetObjectFaceBitangent(TempVertex[1],0,0,1)
+			Voxel_SetObjectFaceBitangent(TempVertex[2],0,0,1)
+			Voxel_SetObjectFaceBitangent(TempVertex[3],0,0,1)
 		endcase
 	endselect
 	
-	Offset=IndexOffset+trunc(VertexID/4)*24
-	SetMemblockInt(MemblockID,Offset+0*4,VertexID+0)
-	SetMemblockInt(MemblockID,Offset+1*4,VertexID+1)
-	SetMemblockInt(MemblockID,Offset+2*4,VertexID+2)
-	SetMemblockInt(MemblockID,Offset+3*4,VertexID+2)
-	SetMemblockInt(MemblockID,Offset+4*4,VertexID+3)
-	SetMemblockInt(MemblockID,Offset+5*4,VertexID+0)
-endfunction MemblockID
+	Object.Vertex.insert(TempVertex[0])
+	Object.Vertex.insert(TempVertex[1])
+	Object.Vertex.insert(TempVertex[2])
+	Object.Vertex.insert(TempVertex[3])
+	
+	Object.Index.insert(Object.Vertex.length-3)
+	Object.Index.insert(Object.Vertex.length-2)
+	Object.Index.insert(Object.Vertex.length-1)
+	Object.Index.insert(Object.Vertex.length-1)
+	Object.Index.insert(Object.Vertex.length)
+	Object.Index.insert(Object.Vertex.length-3)
+endfunction
+
+function Voxel_SetObjectFacePosition(Vertex ref as VertexData,X#,Y#,Z#)
+	Vertex.Pos.X#=X#
+	Vertex.Pos.Y#=Y#
+	Vertex.Pos.Z#=Z#
+endfunction
+
+function Voxel_SetObjectFaceNormal(Vertex ref as VertexData,X#,Y#,Z#)
+	Vertex.Normal.X#=X#
+	Vertex.Normal.Y#=Y#
+	Vertex.Normal.Z#=Z#
+endfunction
+
+function Voxel_SetObjectFaceUV(Vertex ref as VertexData,U#,V#)
+	Vertex.UV.X#=U#
+	Vertex.UV.Y#=V#
+endfunction
+
+function Voxel_SetObjectFaceColor(Vertex ref as VertexData,Red,Green,Blue,Alpha)
+	Vertex.Color.Red#=Red/255.0
+	Vertex.Color.Green#=Green/255.0
+	Vertex.Color.Blue#=Blue/255.0
+	Vertex.Color.Alpha#=Alpha/255.0
+endfunction
+
+function Voxel_SetObjectFaceTangent(Vertex ref as VertexData,X#,Y#,Z#)
+	Vertex.Tangent.X#=X#
+	Vertex.Tangent.Y#=Y#
+	Vertex.Tangent.Z#=Z#
+endfunction
+
+function Voxel_SetObjectFaceBitangent(Vertex ref as VertexData,X#,Y#,Z#)
+	Vertex.Bitangent.X#=X#
+	Vertex.Bitangent.Y#=Y#
+	Vertex.Bitangent.Z#=Z#
+endfunction
 
 // Generate the mesh header for a simple one sided plane
 // Position,Normal,UV,Color,Tangent and Bitangent Data
 function Voxel_CreateMeshMemblock(VertexCount)
-//~	VertexCount=4
-	IndexCount=6*trunc(VertexCount/4)
+	IndexCount=6*trunc(1+VertexCount/4) // You can start finding the Bug Here
 	Attributes=6
 	VertexSize=60
 	VertexOffset=100
@@ -451,7 +415,6 @@ function Voxel_WriteMeshMemblock(MemblockID,Object ref as ObjectData)
 	VertexSize=60
 	VertexOffset=100
 	IndexOffset=VertexOffset+(VertexCount*VertexSize)
-	MemblockSize=IndexOffset+(IndexCount*4)
 	TangentOffset=3*4+3*4+2*4+4*1
 	BitangentOffset=3*4+3*4+2*4+4*1+3*4
 	for VertexID=0 to Object.Vertex.length
@@ -459,7 +422,7 @@ function Voxel_WriteMeshMemblock(MemblockID,Object ref as ObjectData)
 		SetMeshMemblockVertexPosition(MemblockID,VertexID,Object.Vertex[VertexID].Pos.X#,Object.Vertex[VertexID].Pos.Y#,Object.Vertex[VertexID].Pos.Z#)
 		SetMeshMemblockVertexNormal(MemblockID,VertexID,Object.Vertex[VertexID].Normal.X#,Object.Vertex[VertexID].Normal.Y#,Object.Vertex[VertexID].Normal.Z#)
 		SetMeshMemblockVertexUV(MemblockID,VertexID,Object.Vertex[VertexID].UV.X#,Object.Vertex[VertexID].UV.Y#)
-		SetMeshMemblockVertexColor(MemblockID,VertexID,Object.Vertex[VertexID].Color.Red#,Object.Vertex[VertexID].Color.Green#,Object.Vertex[VertexID].Color.Blue#,Object.Vertex[VertexID].Color.Alpha#)
+		SetMeshMemblockVertexColor(MemblockID,VertexID,Object.Vertex[VertexID].Color.Red#*255,Object.Vertex[VertexID].Color.Green#*255,Object.Vertex[VertexID].Color.Blue#*255,Object.Vertex[VertexID].Color.Alpha#*255)
 		Offset=VertexOffset+(VertexID*VertexSize)+TangentOffset
 		Voxel_SetMemblockVec3(MemblockID,Offset,Object.Vertex[VertexID].Tangent.X#,Object.Vertex[VertexID].Tangent.Y#,Object.Vertex[VertexID].Tangent.Z#)
 		Offset=VertexOffset+(VertexID*VertexSize)+BitangentOffset
@@ -501,9 +464,34 @@ function Voxel_PrintMeshMemblock(MemblockID)
 	next
 endfunction
 
-// needed to set Tangent and Bitangent vectors
+function Voxel_SetMemblockVec4(MemblockID,Offset,x#,y#,z#,w#)
+	SetMemblockFloat(MemblockID,Offset,x#)
+	SetMemblockFloat(MemblockID,Offset+4,y#)
+	SetMemblockFloat(MemblockID,Offset+8,z#)
+	SetMemblockFloat(MemblockID,Offset+12,w#)
+endfunction
+
 function Voxel_SetMemblockVec3(MemblockID,Offset,x#,y#,z#)
 	SetMemblockFloat(MemblockID,Offset,x#)
 	SetMemblockFloat(MemblockID,Offset+4,y#)
 	SetMemblockFloat(MemblockID,Offset+8,z#)
+endfunction
+
+function Voxel_SetMemblockVec2(MemblockID,Offset,u#,v#)
+	SetMemblockFloat(MemblockID,Offset,u#)
+	SetMemblockFloat(MemblockID,Offset+4,v#)
+endfunction
+
+function SetMemblockByte4(MemblockID,Offset,r,g,b,a)
+	SetMemblockByte(MemblockID,Offset,r)
+	SetMemblockByte(MemblockID,Offset+1,g)
+	SetMemblockByte(MemblockID,Offset+2,b)
+	SetMemblockByte(MemblockID,Offset+3,a)
+endfunction
+
+function Voxel_SetMemblockInt4(MemblockID,Offset,x#,y#,z#,w#)
+	SetMemblockInt(MemblockID,Offset,x#)
+	SetMemblockInt(MemblockID,Offset+4,y#)
+	SetMemblockInt(MemblockID,Offset+8,z#)
+	SetMemblockInt(MemblockID,Offset+12,w#)
 endfunction

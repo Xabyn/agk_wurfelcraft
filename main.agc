@@ -5,11 +5,11 @@
 
 SetErrorMode(2)
 
-#include ".\..\Templates\ShaderPack\Includes\SP_Common.agc"
-#include ".\..\Templates\ShaderPack\Includes\SP_MeshManipulation.agc"
+//~#include ".\..\Templates\ShaderPack\Includes\SP_Common.agc"
+//~#include ".\..\Templates\ShaderPack\Includes\SP_MeshManipulation.agc"
 
 #include "voxel.agc"
-//~#include "camera.agc"
+#include "camera.agc"
 #include "noise.agc"
 
 // set window properties
@@ -31,31 +31,28 @@ SetDefaultWrapU(1)
 SetDefaultWrapU(1)
 SetGenerateMipmaps(0)
 
-Global World as WorldData[18,18,18]
+World as WorldData[18,18,18]
+Object as ObjectData
+
 Noise_Init()
 Noise_Seed(257)
 
-World[1,2,1].CubeType=1
-World[2,2,1].CubeType=1
-World[2,2,1].CubeType=1
+freq#=6.0
+for X=1 to World.length-1
+	for Y=1 to World[0].length-1
+		for Z=1 to World[0,0].length-1
+			Value#=abs(Noise_Perlin3(X/freq#,Y/freq#,Z/freq#))
+			if Value#>0.3 then World[X,Y,Z].CubeType=1
+		next Z
+	next Y
+next X
 
-//~freq#=6.0
-//~for X=1 to World.length-1
-//~	for Y=1 to World[0].length-1
-//~		for Z=1 to World[0,0].length-1
-//~			Value#=abs(Noise_Perlin3(X/freq#,Y/freq#,Z/freq#))
-//~			if Value#>0.3 then World[X,Y,Z].CubeType=1
-//~		next Z
-//~	next Y
-//~next X
-message("!")
-
-MemblockID=Voxel_InitWorld(World)
+MemblockID=Voxel_InitWorld(Object,World)
 
 do
-    Print( ScreenFPS() )
+    Print("FPS: "+str(ScreenFPS(),0))
     
-    SP_ControlCamera()
+    ControlCamera()
     
     Sync()
 loop
